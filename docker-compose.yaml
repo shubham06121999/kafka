@@ -1,0 +1,40 @@
+version: "3.8"
+networks: 
+  rmoff_kafka:
+    name: rmoff_kafka
+services:
+  zookeeper:
+    container_name: zookeeper
+    networks: 
+     - rmoff_kafka
+    image: confluentinc/cp-zookeeper:5.5.0
+    ports: 
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  kafka:
+    container_name: kafka
+    networks: 
+      - rmoff_kafka
+    image: confluentinc/cp-kafka:5.5.0
+    hostname: kafka
+    depends_on: 
+      - zookeeper
+    ports:
+      - 9092:9092
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,CONNECTIONS_FROM_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONNECTIONS_FROM_HOST:PLAINTEXT
+      # KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 504857600
+      KAFKA_MESSAGE_MAX_BYTES: 546800640
+      # KAFKA_CREATE_TOPICS: "refrigerator-raw:1:1,smart-couch-raw:1:1,smart-watch-raw:1:1,car-fuel-raw:1:1"
+      # KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      restart: always
