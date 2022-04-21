@@ -2,24 +2,22 @@ version: "3.8"
 networks: 
   rmoff_kafka:
     name: rmoff_kafka
-
 services:
   zookeeper:
     container_name: zookeeper
     networks: 
       - rmoff_kafka
-    image: confluentinc/cp-zookeeper:6.1.1
+    image: confluentinc/cp-zookeeper:7.1.1
     ports:
       - 2181:2181
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-
   kafka:
     container_name: kafka
     networks: 
       - rmoff_kafka
-    image: confluentinc/cp-kafka:6.1.1
+    image: confluentinc/cp-kafka:7.1.1
     hostname: kafka
     depends_on:
       - zookeeper
@@ -36,12 +34,17 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_SOCKET_REQUEST_MAX_BYTES: 504857600
       KAFKA_MESSAGE_MAX_BYTES: 546800640
+      KAFKA_LOG4J_LOGGERS: kafka.controller=WARN,kafka.foo.bar=DEBUG
+      KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
+      KAFKA_TOOLS_LOG4J_LOGLEVEL: ERROR
+      KAFKA_REQUEST_TIMEOUT_MS: 100000
     command: sh -c "
-            ((sleep 15 && 
-            kafka-topics --create --zookeeper zookeeper:2181 --if-not-exists --replication-factor 1 --partitions 1 --topic parser-results-local &&
-            kafka-topics --create --zookeeper zookeeper:2181 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-assigner-local &&
-            kafka-topics --create --zookeeper zookeeper:2181 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-assigner-group-local &&
-            kafka-topics --create --zookeeper zookeeper:2181 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-file-to-parser-local &&
-            kafka-topics --create --zookeeper zookeeper:2181 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-file-to-parser-group-local
+            ((sleep 20 &&
+            kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --replication-factor 1 --partitions 1 --topic parser-results-local &&
+            kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --replication-factor 1 --partitions 1 --topic parser-results-group-local &&
+            kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-assigner-local &&
+            kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-assigner-group-local &&
+            kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-file-to-parser-local &&
+            kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --replication-factor 1 --partitions 1 --topic directory-watch-file-to-parser-group-local
             )&) && /etc/confluent/docker/run 
             "
